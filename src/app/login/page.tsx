@@ -49,45 +49,111 @@ export default function LoginPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            backgroundImage: 'url(/login_background.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
             padding: '1rem',
         }}>
+            {/* Overlay darker to ensure readability */}
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                backdropFilter: 'blur(2px)',
+                zIndex: 0
+            }} />
+
             <div className="card" style={{
-                maxWidth: '400px',
+                position: 'relative',
+                zIndex: 1,
+                maxWidth: '450px',
                 width: '100%',
-                boxShadow: 'var(--shadow-xl)',
+                background: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                borderRadius: '16px',
+                padding: '2.5rem',
             }}>
-                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <h1 style={{
-                        fontSize: '2rem',
-                        fontWeight: 700,
-                        background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        marginBottom: '0.5rem',
+                <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+                    {/* Logo Section */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        marginBottom: '1.5rem',
+                        alignItems: 'center',
+                        gap: '1rem'
                     }}>
-                        SFL Management
+                        <img
+                            src="/logo.png"
+                            alt="SpeedIssuesFlow Logo"
+                            style={{
+                                height: '60px',
+                                objectFit: 'contain'
+                            }}
+                        />
+                        <span style={{
+                            fontSize: '2rem',
+                            fontWeight: 800,
+                            color: '#1e3a8a', // Dark blue professional color
+                            letterSpacing: '2px'
+                        }}>SPF</span>
+                    </div>
+
+                    <h1 style={{
+                        fontSize: '1.75rem',
+                        fontWeight: 700,
+                        color: '#1f2937',
+                        marginBottom: '0.5rem',
+                        letterSpacing: '-0.5px'
+                    }}>
+                        SpeedIssuesFlow
                     </h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                        Sistema de Gestión de Casos y Pruebas
+                    <p style={{
+                        color: '#6b7280',
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px'
+                    }}>
+                        Sistema Especializado de Casos y Pruebas
                     </p>
                 </div>
 
                 <form onSubmit={handleLogin}>
-                    <div className="form-group">
-                        <label className="label">Email o Usuario</label>
+                    <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                        <label className="label" style={{
+                            color: '#374151',
+                            fontWeight: 600,
+                            marginBottom: '0.5rem'
+                        }}>Email o Usuario</label>
                         <input
                             type="text"
                             className="input"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            placeholder="nombre@empresa.com o usuario"
+                            placeholder="usuario@empresa.com"
+                            style={{
+                                background: 'rgba(255, 255, 255, 0.8)',
+                                border: '1px solid #e5e7eb',
+                                padding: '0.75rem 1rem',
+                                borderRadius: '8px',
+                                width: '100%'
+                            }}
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label className="label" htmlFor="password">
+                    <div className="form-group" style={{ marginBottom: '2rem' }}>
+                        <label className="label" htmlFor="password" style={{
+                            color: '#374151',
+                            fontWeight: 600,
+                            marginBottom: '0.5rem'
+                        }}>
                             Contraseña
                         </label>
                         <input
@@ -98,17 +164,25 @@ export default function LoginPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
+                            style={{
+                                background: 'rgba(255, 255, 255, 0.8)',
+                                border: '1px solid #e5e7eb',
+                                padding: '0.75rem 1rem',
+                                borderRadius: '8px',
+                                width: '100%'
+                            }}
                         />
                     </div>
 
                     {error && (
                         <div style={{
                             padding: '0.75rem',
-                            background: '#FEE2E2',
-                            color: '#DC2626',
-                            borderRadius: 'var(--radius-md)',
+                            background: '#fee2e2',
+                            color: '#991b1b',
+                            borderRadius: '8px',
                             fontSize: '0.875rem',
-                            marginBottom: '1rem',
+                            marginBottom: '1.5rem',
+                            border: '1px solid #fecaca'
                         }}>
                             {error}
                         </div>
@@ -117,29 +191,39 @@ export default function LoginPage() {
                     <button
                         type="submit"
                         className="btn btn-primary"
-                        style={{ width: '100%' }}
+                        style={{
+                            width: '100%',
+                            padding: '0.875rem',
+                            fontSize: '1rem',
+                            fontWeight: 600,
+                            background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: 'white',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: '0 4px 6px -1px rgba(30, 58, 138, 0.3)'
+                        }}
                         disabled={loading}
                     >
                         {loading ? (
                             <>
-                                <span className="loading" />
-                                Iniciando sesión...
+                                <span className="loading" style={{ marginRight: '8px' }} />
+                                Accesando...
                             </>
                         ) : (
-                            'Iniciar Sesión'
+                            'Ingresar al Sistema'
                         )}
                     </button>
                 </form>
 
                 <div style={{
-                    marginTop: '1.5rem',
-                    padding: '1rem',
-                    background: 'var(--bg-secondary)',
-                    borderRadius: 'var(--radius-md)',
+                    marginTop: '2rem',
+                    textAlign: 'center',
                     fontSize: '0.75rem',
-                    color: 'var(--text-tertiary)',
+                    color: '#6b7280',
                 }}>
-                    <strong>Nota:</strong> contacta al administrador para obtener credenciales de acceso.
+                    &copy; {new Date().getFullYear()} SpeedIssuesFlow. Todos los derechos reservados.
                 </div>
             </div>
         </div>

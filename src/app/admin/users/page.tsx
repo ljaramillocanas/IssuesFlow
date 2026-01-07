@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+
 import Navbar from '@/components/Navbar';
 import { Profile } from '@/types';
 import { formatDateTime } from '@/lib/utils';
@@ -76,7 +77,7 @@ export default function UsersPage() {
         setCreating(true);
 
         try {
-            // Call our new API route
+            // Call our API route which uses the Service Role to create the user
             const response = await fetch('/api/admin/create-user', {
                 method: 'POST',
                 headers: {
@@ -102,6 +103,7 @@ export default function UsersPage() {
             loadUsers();
 
         } catch (error: any) {
+            console.error('Error creating user:', error);
             alert(`Error al crear usuario: ${error.message}`);
         } finally {
             setCreating(false);

@@ -93,6 +93,7 @@ export function exportCasesWithProgress(
     const casesData = cases.map(c => ({
         'ID': c.id.substring(0, 8),
         'Título': c.title,
+        'Descripción': c.description || '', // Agregado por solicitud
         'Estado': c.status?.name || '',
         'Responsable': c.responsible?.full_name || '',
         'Fecha Creación': formatDateTime(c.created_at),
@@ -110,6 +111,7 @@ export function exportCasesWithProgress(
                 'Fecha': formatDateTime(p.created_at),
                 'Usuario': p.creator?.full_name || '',
                 'Descripción': p.description,
+                'Observación': p.observacion || '', // Nuevo campo
                 'Notas Comité': p.committee_notes || '',
             });
         });

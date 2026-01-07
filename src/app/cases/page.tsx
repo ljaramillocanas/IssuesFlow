@@ -100,8 +100,91 @@ export default function CasesPage() {
         setFilteredCases(filtered);
     };
 
-    const handleExport = () => {
-        exportCasesToExcel(filteredCases, `casos-${new Date().toISOString().split('T')[0]}.xlsx`);
+    const handleExport = async () => {
+        try {
+            const exportBtn = document.getElementById('export-btn');
+            if (exportBtn) {
+                exportBtn.innerText = '⏳ Generando...';
+                (exportBtn as HTMLButtonElement).disabled = true;
+            }
+
+            // 1. Obtener IDs de los casos filtrados
+            const caseIds = filteredCases.map(c => c.id);
+
+            if (caseIds.length === 0) {
+                alert('No hay casos para exportar');
+                if (exportBtn) {
+                    exportBtn.innerText = '📊 Exportar a Excel';
+                    (exportBtn as HTMLButtonElement).disabled = false;
+                }
+                return;
+            }
+
+            // 2. Traer el historial (audit_log) de esos casos
+            // Lo hacemos en lotes si son muchos, pero por ahora directo
+            const { data: logs, error } = await supabase
+                .from('audit_log')
+                .select(`
+                    *,
+                    creator:profiles!audit_log_changed_by_fkey(full_name)
+                `)
+                .in('record_id', caseIds)
+                .order('created_at', { ascending: true }); // Orden cronológico para lectura
+
+            if (error) throw error;
+
+            // 3. Agrupar logs por caso
+            const progressData: Record<string, any[]> = {};
+            logs?.forEach(log => {
+                if (!progressData[log.record_id]) {
+                    progressData[log.record_id] = [];
+                }
+
+                // Formateamos un poco la descripción según la acción
+                let desc = '';
+                if (log.action === 'INSERT') desc = 'Caso creado';
+                else if (log.action === 'UPDATE') {
+                    // Generar un texto legible de los cambios
+                    const changes = [];
+                    const oldD = log.old_data || {};
+                    const newD = log.new_data || {};
+
+                    for (const key in newD) {
+                        if (JSON.stringify(newD[key]) !== JSON.stringify(oldD[key])) {
+                            // Ignorar campos técnicos
+                            if (['updated_at', 'created_at'].includes(key)) continue;
+                            changes.push(`${key}: ${newD[key]}`);
+                        }
+                    }
+                    desc = changes.length > 0 ? `Cambios: ${changes.join(', ')}` : 'Actualización';
+                }
+
+                // Extraemos la observación explícitamente si existe en new_data
+                const observacion = log.new_data?.observacion || '';
+
+                progressData[log.record_id].push({
+                    created_at: log.created_at,
+                    creator: log.creator,
+                    description: desc + (log.changed_fields ? ` (${log.changed_fields})` : ''),
+                    observacion: observacion, // Nuevo campo
+                    committee_notes: ''
+                });
+            });
+
+            // 4. Exportar
+            const { exportCasesWithProgress } = await import('@/lib/export'); // Dynamic import to avoid cycles or heavy load
+            exportCasesWithProgress(filteredCases, progressData, `Reporte_Casos_Completo_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+        } catch (err: any) {
+            console.error('Error export:', err);
+            alert('Error al exportar: ' + err.message);
+        } finally {
+            const exportBtn = document.getElementById('export-btn');
+            if (exportBtn) {
+                exportBtn.innerText = '📊 Exportar a Excel';
+                (exportBtn as HTMLButtonElement).disabled = false;
+            }
+        }
     };
 
     const canCreate = profile && hasPermission(profile.role, 'canCreateCase');
@@ -120,7 +203,7 @@ export default function CasesPage() {
                         </p>
                     </div>
                     <div className="flex gap-2">
-                        <button onClick={handleExport} className="btn btn-secondary">
+                        <button id="export-btn" onClick={handleExport} className="btn btn-secondary">
                             📊 Exportar a Excel
                         </button>
                         {canCreate && (

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { formatDateTime } from '@/lib/utils';
+import LiquidLoader from '@/components/LiquidLoader';
 
 interface AuditLogEntry {
     id: string;
@@ -19,7 +20,7 @@ interface AuditLogEntry {
 }
 
 interface ChangeHistoryProps {
-    tableName: 'cases' | 'tests';
+    tableName: 'cases' | 'tests' | 'solutions';
     recordId: string;
 }
 
@@ -126,7 +127,7 @@ export default function ChangeHistory({ tableName, recordId }: ChangeHistoryProp
     if (loading) {
         return (
             <div style={{ textAlign: 'center', padding: '2rem' }}>
-                <div className="loading" style={{ width: '32px', height: '32px', margin: '0 auto' }} />
+                <LiquidLoader />
             </div>
         );
     }

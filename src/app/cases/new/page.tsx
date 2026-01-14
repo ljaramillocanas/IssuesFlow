@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { showAlert } from '@/lib/sweetalert';
 import Navbar from '@/components/Navbar';
 import ImageUpload from '@/components/ImageUpload';
 import { Application, Category, CaseType, Status, Profile } from '@/types';
@@ -85,7 +86,8 @@ export default function NewCasePage() {
 
             router.push(`/cases/${data.id}`);
         } catch (error: any) {
-            alert('Error al crear el caso: ' + error.message);
+            console.error('Error creating case:', error);
+            showAlert('Error', 'Error al crear el caso: ' + error.message, 'error');
         } finally {
             setLoading(false);
         }
@@ -95,14 +97,14 @@ export default function NewCasePage() {
         <>
             <Navbar />
             <main className="container" style={{ padding: '2rem 1.5rem', maxWidth: '800px' }}>
-                <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-formal)' }}>
                     Nuevo Caso
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
                     Registra un nuevo caso en el sistema
                 </p>
 
-                <form onSubmit={handleSubmit} className="card">
+                <form onSubmit={handleSubmit} className="card" style={{ boxShadow: 'var(--shadow-formal)' }}>
                     <div className="form-group">
                         <label className="label" htmlFor="title">
                             Título *

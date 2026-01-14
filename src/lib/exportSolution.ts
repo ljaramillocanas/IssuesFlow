@@ -1,4 +1,6 @@
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun } from 'docx';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun, convertInchesToTwip } from 'docx';
+import { saveAs } from "file-saver";
+import { showAlert } from './sweetalert';
 import { Solution, Test } from '@/types';
 
 /**
@@ -302,7 +304,7 @@ export async function exportSolutionToWord(solution: Solution & { tests?: Test[]
                             new Paragraph({
                                 children: [
                                     new TextRun({
-                                        text: `Figura: ${image.name}`,
+                                        text: `Figura: ${image.name} `,
                                         italics: true
                                     })
                                 ],
@@ -363,8 +365,8 @@ export async function downloadSolutionAsWord(solution: Solution, attachments: an
 
         return true;
     } catch (error) {
-        console.error('Error downloading Word document:', error);
-        alert('Error al generar el documento de Word');
+        console.error("Error generating doc:", error);
+        showAlert('Error', 'Error al generar el documento de Word', 'error');
         return false;
     }
 }

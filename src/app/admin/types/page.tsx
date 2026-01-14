@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { showAlert, showConfirm } from '@/lib/sweetalert';
 import Navbar from '@/components/Navbar';
 import { CaseType, TestType } from '@/types';
+import LiquidLoader from '@/components/LiquidLoader';
 
 export default function AdminTypesPage() {
     const [caseTypes, setCaseTypes] = useState<CaseType[]>([]);
@@ -35,16 +37,25 @@ export default function AdminTypesPage() {
     const handleSave = async () => {
         const table = activeTab === 'case' ? 'case_types' : 'test_types';
 
-        if (editing) {
-            await supabase
-                .from(table)
-                .update(formData)
-                .eq('id', editing.id);
-        } else {
-            await supabase
-                .from(table)
-                .insert([formData]);
+        try {
+            if (editing) {
+                const { error } = await supabase
+                    .from(table)
+                    .update(formData)
+                    .eq('id', editing.id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from(table)
+                    .insert([formData]);
+                if (error) throw error;
+            }
+            showAlert('Éxito', 'Tipo guardado exitosamente', 'success');
+        } catch (error: any) {
+            console.error('Error saving type:', error);
+            showAlert('Error', 'Error al guardar: ' + error.message, 'error');
         }
+
         setShowModal(false);
         loadTypes();
         resetForm();
@@ -61,13 +72,22 @@ export default function AdminTypesPage() {
     };
 
     const handleDelete = async (id: string, tab: 'case' | 'test') => {
-        if (confirm('¿Estás seguro de eliminar este tipo?')) {
+        const confirmed = await showConfirm('¿Estás seguro de eliminar este tipo?');
+        if (!confirmed) return;
+
+        try {
             const table = tab === 'case' ? 'case_types' : 'test_types';
-            await supabase
+            const { error } = await supabase
                 .from(table)
                 .update({ deleted_at: new Date().toISOString() })
                 .eq('id', id);
+
+            if (error) throw error;
+            showAlert('Éxito', 'Tipo eliminado exitosamente', 'success');
             loadTypes();
+        } catch (error: any) {
+            console.error('Error deleting type:', error);
+            showAlert('Error', 'Error al eliminar: ' + error.message, 'error');
         }
     };
 
@@ -133,7 +153,7 @@ export default function AdminTypesPage() {
 
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '3rem' }}>
-                        <div className="loading" style={{ width: '48px', height: '48px', margin: '0 auto' }} />
+                        <LiquidLoader />
                     </div>
                 ) : (
                     <div className="table-container">

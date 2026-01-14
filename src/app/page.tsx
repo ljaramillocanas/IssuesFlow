@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
+import ReportModal from '@/components/ReportModal';
+import LiquidLoader from '@/components/LiquidLoader';
 import { Profile } from '@/types';
 import {
   BarChart,
@@ -39,7 +41,49 @@ export default function DashboardPage() {
   const [testStatusData, setTestStatusData] = useState<any[]>([]);
   const [testAppData, setTestAppData] = useState<any[]>([]);
 
+  // AI Report State
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportContent, setReportContent] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
+
   const router = useRouter();
+
+  const handleGenerateInsights = async (instruction?: string) => {
+    // If we are just opening the modal (no instruction), or providing instruction
+    if (!instruction) {
+      setShowReportModal(true);
+    }
+
+    setReportLoading(true);
+    if (!instruction) setReportContent('');
+
+    try {
+      const response = await fetch('/api/ai/dashboard/insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stats,
+          statusData: chartView === 'cases' ? statusData : testStatusData, // Send relevant data
+          appData: chartView === 'cases' ? appData : testAppData,
+          recentActivity: recentActivity.slice(0, 10), // Send top 10 recent
+          additionalInstructions: instruction
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Error generando análisis');
+      }
+
+      const data = await response.json();
+      setReportContent(data.report);
+    } catch (error: any) {
+      console.error('Error generating insights:', error);
+      setReportContent('Error al generar el análisis: ' + error.message);
+    } finally {
+      setReportLoading(false);
+    }
+  };
 
   useEffect(() => {
     checkAuth();
@@ -212,7 +256,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="loading" style={{ width: '48px', height: '48px' }} />
+        <LiquidLoader />
       </div>
     );
   }
@@ -235,12 +279,25 @@ export default function DashboardPage() {
               Bienvenido de nuevo, {profile?.full_name}
             </p>
           </div>
-          <div className="flex gap-3">
-            <button onClick={() => router.push('/cases/new')} className="btn btn-primary">
-              + Nuevo Caso
-            </button>
-          </div>
         </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => handleGenerateInsights()}
+            className="btn"
+            style={{
+              background: 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)',
+              color: 'white',
+              border: 'none',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+            }}
+          >
+            ✨ Análisis IA
+          </button>
+          <button onClick={() => router.push('/cases/new')} className="btn btn-primary">
+            + Nuevo Caso
+          </button>
+        </div>
+
 
         {/* Stats & Quick Actions Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6" style={{ marginBottom: '2rem' }}>
@@ -295,15 +352,40 @@ export default function DashboardPage() {
           </div>
 
           {/* Module: Acceso Rápido */}
-          <div className="card flex flex-col justify-center" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)', border: 'none' }}>
+          <div className="card flex flex-col justify-center" style={{
+            padding: '1.5rem',
+            background: 'var(--gradient-dark)',
+            border: 'none',
+            boxShadow: 'var(--shadow-formal)'
+          }}>
             <h3 className="font-semibold text-lg mb-1" style={{ color: 'white' }}>Acceso Rápido</h3>
-            <p className="text-xs mb-4" style={{ color: '#e0e7ff' }}>Acciones frecuentes</p>
+            <p className="text-xs mb-4" style={{ color: '#e0e7ff', opacity: 0.8 }}>Acciones frecuentes</p>
 
             <div className="flex flex-col gap-2">
-              <button onClick={() => router.push('/tests/new')} className="btn" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', justifyContent: 'flex-start', border: '1px solid rgba(255,255,255,0.2)' }}>
+              <button
+                onClick={() => router.push('/tests/new')}
+                className="btn"
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  color: 'white',
+                  justifyContent: 'flex-start',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  backdropFilter: 'blur(5px)'
+                }}
+              >
                 <span>🧪</span> Crear Nueva Prueba
               </button>
-              <button onClick={() => router.push('/reports')} className="btn" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', justifyContent: 'flex-start', border: '1px solid rgba(255,255,255,0.2)' }}>
+              <button
+                onClick={() => router.push('/reports')}
+                className="btn"
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  color: 'white',
+                  justifyContent: 'flex-start',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  backdropFilter: 'blur(5px)'
+                }}
+              >
                 <span>📊</span> Generar Reportes
               </button>
             </div>
@@ -490,8 +572,18 @@ export default function DashboardPage() {
               No hay actividad reciente
             </div>
           )}
+
         </div>
-      </main>
+
+        <ReportModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          content={reportContent}
+          loading={reportLoading}
+          title="Análisis Estratégico del Proyecto"
+          onRegenerate={handleGenerateInsights}
+        />
+      </main >
     </>
   );
 }

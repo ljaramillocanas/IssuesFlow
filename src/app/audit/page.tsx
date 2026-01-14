@@ -4,7 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
-import { formatDateTime } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
+import { showAlert } from '@/lib/sweetalert';
+import LiquidLoader from '@/components/LiquidLoader';
 import { Profile } from '@/types';
 import { hasPermission, canAccessAdminPanel } from '@/lib/permissions';
 
@@ -31,6 +33,7 @@ export default function AuditPage() {
     const [loading, setLoading] = useState(true);
 
     // Filters
+    const [showFilters, setShowFilters] = useState(false);
     const [filterUser, setFilterUser] = useState('');
     const [filterTable, setFilterTable] = useState('');
     const [filterAction, setFilterAction] = useState('');
@@ -92,15 +95,16 @@ export default function AuditPage() {
         setLoading(true);
         try {
             // 1. Fetch Audit Logs (Raw, no join)
-            const { data: logsData, error: logsError } = await supabase
+            const { data: auditData, error: auditError } = await supabase
                 .from('audit_log')
                 .select('*')
                 .order('created_at', { ascending: false })
                 .limit(1000);
 
-            if (logsError) {
-                console.error('Error fetching audit logs:', logsError);
-                throw logsError;
+            if (auditError) {
+                console.error('Error fetching audit logs:', auditError);
+                showAlert('Error', 'Error al cargar la auditoría. Por favor revise la consola.', 'error');
+                return;
             }
 
             // 2. Fetch Users (Profiles)
@@ -117,10 +121,10 @@ export default function AuditPage() {
             }
 
             // 3. Manual Join (Client-side)
-            if (logsData) {
+            if (auditData) {
                 const userMap = new Map((usersData || []).map(u => [u.id, u]));
 
-                const joinedLogs: AuditLogEntry[] = logsData.map(log => ({
+                const joinedLogs: AuditLogEntry[] = auditData.map(log => ({
                     ...log,
                     user: userMap.get(log.changed_by) || { full_name: 'Usuario Desconocido' }
                 }));
@@ -231,112 +235,123 @@ export default function AuditPage() {
         <>
             <Navbar />
             <main className="container" style={{ padding: '2rem 1.5rem', maxWidth: '1400px' }}>
-                <div style={{ marginBottom: '2rem' }}>
-                    <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-                        Bitácora de Auditoría
-                    </h1>
-                    <p style={{ color: 'var(--text-secondary)' }}>
-                        Registro completo de cambios en el sistema
-                    </p>
+                <div className="flex items-center justify-between" style={{ marginBottom: '2rem' }}>
+                    <div>
+                        <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                            Bitácora de Auditoría
+                        </h1>
+                        <p style={{ color: 'var(--text-secondary)' }}>
+                            Registro completo de cambios en el sistema
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className="btn btn-secondary"
+                        style={{ backgroundColor: showFilters ? 'var(--bg-tertiary)' : undefined }}
+                    >
+                        🔍 Filtros
+                    </button>
                 </div>
 
                 {/* Filters Card */}
-                <div className="card" style={{ marginBottom: '1.5rem' }}>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>
-                        Filtros
-                    </h2>
+                {showFilters && (
+                    <div className="card" style={{ marginBottom: '1.5rem' }}>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>
+                            Filtros
+                        </h2>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4" style={{ marginBottom: '1rem' }}>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="label">Usuario</label>
-                            <select
-                                className="input"
-                                value={filterUser}
-                                onChange={(e) => setFilterUser(e.target.value)}
-                            >
-                                <option value="">Todos los usuarios</option>
-                                {users.map((user) => (
-                                    <option key={user.id} value={user.id}>{user.full_name}</option>
-                                ))}
-                            </select>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4" style={{ marginBottom: '1rem' }}>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="label">Usuario</label>
+                                <select
+                                    className="input"
+                                    value={filterUser}
+                                    onChange={(e) => setFilterUser(e.target.value)}
+                                >
+                                    <option value="">Todos los usuarios</option>
+                                    {users.map((user) => (
+                                        <option key={user.id} value={user.id}>{user.full_name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="label">Tabla</label>
+                                <select
+                                    className="input"
+                                    value={filterTable}
+                                    onChange={(e) => setFilterTable(e.target.value)}
+                                >
+                                    <option value="">Todas las tablas</option>
+                                    <option value="cases">Casos</option>
+                                    <option value="tests">Pruebas</option>
+                                    <option value="profiles">Usuarios</option>
+                                    <option value="statuses">Estados</option>
+                                    <option value="applications">Aplicaciones</option>
+                                    <option value="categories">Categorías</option>
+                                </select>
+                            </div>
+
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="label">Acción</label>
+                                <select
+                                    className="input"
+                                    value={filterAction}
+                                    onChange={(e) => setFilterAction(e.target.value)}
+                                >
+                                    <option value="">Todas las acciones</option>
+                                    <option value="INSERT">Creación</option>
+                                    <option value="UPDATE">Modificación</option>
+                                    <option value="DELETE">Eliminación</option>
+                                </select>
+                            </div>
+
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="label">Fecha Desde</label>
+                                <input
+                                    type="date"
+                                    className="input"
+                                    value={filterDateFrom}
+                                    onChange={(e) => setFilterDateFrom(e.target.value)}
+                                />
+                            </div>
                         </div>
 
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="label">Tabla</label>
-                            <select
-                                className="input"
-                                value={filterTable}
-                                onChange={(e) => setFilterTable(e.target.value)}
-                            >
-                                <option value="">Todas las tablas</option>
-                                <option value="cases">Casos</option>
-                                <option value="tests">Pruebas</option>
-                                <option value="profiles">Usuarios</option>
-                                <option value="statuses">Estados</option>
-                                <option value="applications">Aplicaciones</option>
-                                <option value="categories">Categorías</option>
-                            </select>
+                        <div className="flex items-center gap-4">
+                            <div className="form-group" style={{ marginBottom: 0, flex: 1 }}>
+                                <label className="label">Fecha Hasta</label>
+                                <input
+                                    type="date"
+                                    className="input"
+                                    value={filterDateTo}
+                                    onChange={(e) => setFilterDateTo(e.target.value)}
+                                />
+                            </div>
+
+                            <div style={{ paddingTop: '1.5rem' }}>
+                                <button
+                                    onClick={clearFilters}
+                                    className="btn btn-secondary"
+                                >
+                                    Limpiar Filtros
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="label">Acción</label>
-                            <select
-                                className="input"
-                                value={filterAction}
-                                onChange={(e) => setFilterAction(e.target.value)}
-                            >
-                                <option value="">Todas las acciones</option>
-                                <option value="INSERT">Creación</option>
-                                <option value="UPDATE">Modificación</option>
-                                <option value="DELETE">Eliminación</option>
-                            </select>
-                        </div>
-
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="label">Fecha Desde</label>
-                            <input
-                                type="date"
-                                className="input"
-                                value={filterDateFrom}
-                                onChange={(e) => setFilterDateFrom(e.target.value)}
-                            />
-                        </div>
+                        {(filterUser || filterTable || filterAction || filterDateFrom || filterDateTo) && (
+                            <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                    Mostrando {filteredLogs.length} de {logs.length} registros
+                                </p>
+                            </div>
+                        )}
                     </div>
-
-                    <div className="flex items-center gap-4">
-                        <div className="form-group" style={{ marginBottom: 0, flex: 1 }}>
-                            <label className="label">Fecha Hasta</label>
-                            <input
-                                type="date"
-                                className="input"
-                                value={filterDateTo}
-                                onChange={(e) => setFilterDateTo(e.target.value)}
-                            />
-                        </div>
-
-                        <div style={{ paddingTop: '1.5rem' }}>
-                            <button
-                                onClick={clearFilters}
-                                className="btn btn-secondary"
-                            >
-                                Limpiar Filtros
-                            </button>
-                        </div>
-                    </div>
-
-                    {(filterUser || filterTable || filterAction || filterDateFrom || filterDateTo) && (
-                        <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
-                            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                                Mostrando {filteredLogs.length} de {logs.length} registros
-                            </p>
-                        </div>
-                    )}
-                </div>
+                )}
 
                 {/* Audit Log Table */}
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '3rem' }}>
-                        <div className="loading" style={{ width: '48px', height: '48px', margin: '0 auto' }} />
+                        <LiquidLoader />
                     </div>
                 ) : filteredLogs.length === 0 ? (
                     <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
@@ -361,8 +376,7 @@ export default function AuditPage() {
                                     {paginatedLogs.map((log) => (
                                         <tr key={log.id}>
                                             <td style={{ fontSize: '0.8125rem' }}>
-                                                {formatDateTime(log.created_at)}
-                                            </td>
+                                                {formatDate(log.created_at)}        </td>
                                             <td style={{ fontWeight: 500 }}>
                                                 {log.user?.full_name || 'Usuario Desconocido'}
                                             </td>

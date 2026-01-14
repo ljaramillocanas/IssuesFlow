@@ -9,13 +9,16 @@ import StatusBadge from '@/components/StatusBadge';
 import AddProgress from '@/components/AddProgress';
 import { Test, Application, Category, TestType, Status, Profile, TestProgress, Case } from '@/types';
 import { formatDateTime, formatRelativeTime } from '@/lib/utils';
+import { showAlert, showConfirm } from '@/lib/sweetalert';
 import { hasPermission } from '@/lib/permissions';
 import { deleteImage } from '@/lib/storage';
 import ImageGallery from '@/components/ImageGallery';
 import ImageUpload from '@/components/ImageUpload';
-import GalleryModal from '@/components/GalleryModal';
+import MediaViewer from '@/components/MediaViewer';
 import { exportTestsWithProgress } from '@/lib/export';
 import ChangeHistory from '@/components/ChangeHistory';
+import ReportModal from '@/components/ReportModal';
+import LiquidLoader from '@/components/LiquidLoader';
 
 export default function TestDetailPage() {
     const params = useParams();
@@ -34,7 +37,13 @@ export default function TestDetailPage() {
     const [testTypes, setTestTypes] = useState<TestType[]>([]);
     const [statuses, setStatuses] = useState<Status[]>([]);
     const [users, setUsers] = useState<Profile[]>([]);
+
     const [cases, setCases] = useState<Array<{ id: string; title: string }>>([]);
+
+    // AI Report State
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportContent, setReportContent] = useState('');
+    const [reportLoading, setReportLoading] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -158,20 +167,21 @@ export default function TestDetailPage() {
 
             setEditing(false);
             await loadTest();
-            alert('Prueba actualizada exitosamente');
+            showAlert('Éxito', 'Prueba actualizada exitosamente', 'success');
         } catch (error: any) {
-            alert('Error al actualizar: ' + error.message);
+            showAlert('Error', 'Error al actualizar: ' + error.message, 'error');
         }
     };
 
 
 
     const handleFinalize = async () => {
-        if (!confirm('¿Estás seguro de finalizar esta prueba?')) return;
+        const confirmed = await showConfirm('¿Estás seguro de finalizar esta prueba?');
+        if (!confirmed) return;
 
         const finalStatus = statuses.find(s => s.is_final);
         if (!finalStatus) {
-            alert('No se encontró un estado final configurado.');
+            showAlert('Advertencia', 'No se encontró un estado final configurado.', 'warning');
             return;
         }
 
@@ -185,10 +195,10 @@ export default function TestDetailPage() {
             .eq('id', params.id);
 
         if (error) {
-            alert('Error al finalizar la prueba');
+            showAlert('Error', 'Error al finalizar la prueba', 'error');
         } else {
             loadTest();
-            alert('Prueba finalizada exitosamente');
+            showAlert('Éxito', 'Prueba finalizada exitosamente', 'success');
         }
         setLoading(false);
     };
@@ -203,7 +213,8 @@ export default function TestDetailPage() {
     };
 
     const handleDelete = async () => {
-        if (!confirm('¿Estás seguro de eliminar esta prueba?')) return;
+        const confirmed = await showConfirm('¿Estás seguro de eliminar esta prueba?');
+        if (!confirmed) return;
 
         try {
             const { error } = await supabase
@@ -215,7 +226,37 @@ export default function TestDetailPage() {
 
             router.push('/tests');
         } catch (error: any) {
-            alert('Error al eliminar: ' + error.message);
+            console.error('Error deleting test:', error);
+            showAlert('Error', 'Error al eliminar: ' + error.message, 'error');
+        }
+    };
+
+    const handleGenerateAIReport = async () => {
+        setShowReportModal(true);
+        setReportLoading(true);
+        setReportContent('');
+
+        try {
+            const response = await fetch('/api/ai/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    entityId: params.id,
+                    entityType: 'test'
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Error generating report');
+            }
+
+            const data = await response.json();
+            setReportContent(data.report);
+        } catch (error: any) {
+            setReportContent('Error al generar el informe: ' + error.message);
+        } finally {
+            setReportLoading(false);
         }
     };
 
@@ -228,7 +269,7 @@ export default function TestDetailPage() {
             <>
                 <Navbar />
                 <div style={{ minHeight: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div className="loading" style={{ width: '48px', height: '48px' }} />
+                    <LiquidLoader />
                 </div>
             </>
         );
@@ -257,7 +298,7 @@ export default function TestDetailPage() {
                 <div className="flex items-center justify-between" style={{ marginBottom: '2rem' }}>
                     <div>
                         <div className="flex items-center gap-4" style={{ marginBottom: '0.5rem' }}>
-                            <h1 style={{ fontSize: '2rem', fontWeight: 700, margin: 0 }}>
+                            <h1 style={{ fontSize: '2rem', fontWeight: 700, margin: 0, color: 'var(--text-formal)' }}>
                                 {testData.title}
                             </h1>
                             {testData.status && <StatusBadge status={testData.status} />}
@@ -269,6 +310,17 @@ export default function TestDetailPage() {
                     <div className="flex gap-2">
                         <button onClick={handleExport} className="btn btn-secondary">
                             📊 Exportar
+                        </button>
+                        <button
+                            onClick={handleGenerateAIReport}
+                            className="btn btn-primary"
+                            style={{
+                                background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                                border: 'none',
+                                color: 'white'
+                            }}
+                        >
+                            ✨ Informe IA
                         </button>
                         {canEdit && !isFinalStatus && (
                             <>
@@ -467,9 +519,16 @@ export default function TestDetailPage() {
                             </div>
 
                             {showGallery && (
-                                <GalleryModal
-                                    attachments={attachments}
+                                <MediaViewer
+                                    isOpen={showGallery}
                                     onClose={() => setShowGallery(false)}
+                                    items={attachments.map(att => ({
+                                        id: att.id,
+                                        url: att.file_url,
+                                        type: att.file_url.match(/\.(mp4|webm|ogg|mov)$/i) ? 'video' : 'image',
+                                        title: att.file_name || 'Adjunto'
+                                    }))}
+                                    initialIndex={0}
                                 />
                             )}
 
@@ -673,6 +732,16 @@ export default function TestDetailPage() {
                     </div>
                 </div>
             </main>
+
+            {testData && (
+                <ReportModal
+                    isOpen={showReportModal}
+                    onClose={() => setShowReportModal(false)}
+                    content={reportContent}
+                    loading={reportLoading}
+                    title={testData.title}
+                />
+            )}
         </>
     );
 }

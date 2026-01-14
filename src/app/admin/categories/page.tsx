@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { showAlert, showConfirm } from '@/lib/sweetalert';
 import Navbar from '@/components/Navbar';
 import { Category } from '@/types';
+import LiquidLoader from '@/components/LiquidLoader';
 
 export default function AdminCategoriesPage() {
     const [categories, setCategories] = useState<Category[]>([]);
@@ -56,13 +58,13 @@ export default function AdminCategoriesPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm('¿Estás seguro de eliminar esta categoría?')) {
-            await supabase
-                .from('categories')
-                .update({ deleted_at: new Date().toISOString() })
-                .eq('id', id);
-            loadCategories();
-        }
+        const confirmed = await showConfirm('¿Estás seguro de eliminar esta categoría?');
+        if (!confirmed) return;
+        await supabase
+            .from('categories')
+            .update({ deleted_at: new Date().toISOString() })
+            .eq('id', id);
+        loadCategories();
     };
 
     const resetForm = () => {
@@ -94,7 +96,7 @@ export default function AdminCategoriesPage() {
 
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '3rem' }}>
-                        <div className="loading" style={{ width: '48px', height: '48px', margin: '0 auto' }} />
+                        <LiquidLoader />
                     </div>
                 ) : (
                     <div className="table-container">

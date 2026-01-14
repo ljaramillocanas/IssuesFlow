@@ -12,6 +12,11 @@
   --warning: #F59E0B;
   --danger: #EF4444;
 
+  /* Formal Corporate Gradients and Colors */
+  --gradient-primary: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  --gradient-dark: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  --text-formal: #1e3a8a;
+
   /* Fondos */
   --bg-primary: #FFFFFF;
   --bg-secondary: #F9FAFB;
@@ -32,6 +37,8 @@
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-formal: 0 10px 30px -5px rgba(30, 58, 138, 0.15);
+  /* New Formal Shadow */
 
   /* Radiuses */
   --radius-sm: 6px;
@@ -56,6 +63,11 @@
   --warning: #FBBF24;
   --danger: #F87171;
 
+  /* Dark mode variants for gradients might be same or adjusted */
+  --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  --gradient-dark: linear-gradient(135deg, #312e81 0%, #4338ca 100%);
+  --text-formal: #e0e7ff;
+
   --bg-primary: #0F172A;
   --bg-secondary: #1E293B;
   --bg-tertiary: #334155;
@@ -72,6 +84,7 @@
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+  --shadow-formal: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
 }
 
 * {
@@ -119,6 +132,13 @@ h6 {
   line-height: 1.2;
   margin-bottom: 0.5em;
   color: var(--text-primary);
+  /* Base color */
+}
+
+/* Add formal header class */
+.h-formal {
+  color: var(--text-formal);
+  letter-spacing: -0.025em;
 }
 
 h1 {
@@ -204,7 +224,8 @@ a:hover {
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
+  /* Increased weight for professionalism */
   line-height: 1.5;
   border-radius: var(--radius-md);
   border: none;
@@ -220,47 +241,66 @@ a:hover {
 }
 
 .btn-primary {
-  background: var(--primary);
+  background: rgba(59, 130, 246, 0.4);
+  /* Glassy Blue */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  background: rgba(59, 130, 246, 0.6);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 40px 0 rgba(31, 38, 135, 0.45);
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.1);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--bg-hover);
-  border-color: var(--border-hover);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
 }
 
 .btn-success {
-  background: var(--accent);
+  background: rgba(16, 185, 129, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
+  box-shadow: 0 4px 16px 0 rgba(6, 95, 70, 0.2);
 }
 
 .btn-success:hover:not(:disabled) {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  background: rgba(16, 185, 129, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px 0 rgba(6, 95, 70, 0.3);
 }
 
 .btn-danger {
-  background: var(--danger);
+  background: rgba(239, 68, 68, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
+  box-shadow: 0 4px 16px 0 rgba(153, 27, 27, 0.2);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #DC2626;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  background: rgba(239, 68, 68, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px 0 rgba(153, 27, 27, 0.3);
 }
 
 .btn-sm {
@@ -459,15 +499,7 @@ a:hover {
 }
 
 /* Loading */
-.loading {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  border: 3px solid var(--border-color);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
+
 
 /* Animations */
 @keyframes fadeIn {
@@ -669,8 +701,293 @@ a:hover {
   line-height: 1;
 }
 
-.stat-label {
-  font-size: 0.875rem;
-  opacity: 0.9;
-  margin-top: 0.5rem;
+/* ... existing code ... */
+
+/* Liquid Animations */
+@keyframes wave-fill {
+  0% {
+    transform: translateY(100%) scale(0.9);
+    border-radius: 40%;
+  }
+
+  100% {
+    transform: translateY(0) scale(1.5);
+    border-radius: 0;
+  }
+}
+
+.btn-wave {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.btn-wave::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.15);
+  /* Subtle white wave */
+  transform: translateY(100%) scale(0.9);
+  border-radius: 40%;
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: -1;
+}
+
+.btn-wave:hover::before {
+  transform: translateY(0) scale(2);
+  border-radius: 0;
+}
+
+/* Auto-apply to primary buttons for consistency */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(100%) scale(0.9);
+  border-radius: 40%;
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: -1;
+}
+
+.btn-primary:hover:not(:disabled)::before {
+  transform: translateY(0) scale(2);
+  border-radius: 0;
+}
+
+/* 
+========================================
+   LIQUID GLASS EVOLUTION (2026)
+========================================
+*/
+
+:root {
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-surface: rgba(255, 255, 255, 0.03);
+  --glass-highlight: rgba(255, 255, 255, 0.1);
+  --neon-primary: rgba(59, 130, 246, 0.6);
+  --neon-secondary: rgba(139, 92, 246, 0.6);
+  --liquid-gradient-1: #3b82f6;
+  --liquid-gradient-2: #8b5cf6;
+  --liquid-gradient-3: #ec4899;
+}
+
+[data-theme="dark"] {
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-surface: rgba(0, 0, 0, 0.2);
+  --glass-highlight: rgba(255, 255, 255, 0.05);
+}
+
+/* Background Blobs */
+.liquid-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--bg-primary);
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: float 20s infinite ease-in-out;
+}
+
+.blob-1 {
+  width: 50vw;
+  height: 50vw;
+  top: -10%;
+  left: -10%;
+  background: var(--liquid-gradient-1);
+  animation-delay: 0s;
+}
+
+.blob-2 {
+  width: 40vw;
+  height: 40vw;
+  top: 40%;
+  right: -10%;
+  background: var(--liquid-gradient-2);
+  animation-delay: -5s;
+}
+
+.blob-3 {
+  width: 30vw;
+  height: 30vw;
+  bottom: -10%;
+  left: 30%;
+  background: var(--liquid-gradient-3);
+  animation-delay: -10s;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+}
+
+/* Liquid Cards */
+.card-liquid {
+  background: var(--glass-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  border-top: 1px solid var(--glass-highlight);
+  border-left: 1px solid var(--glass-highlight);
+  border-radius: 24px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card-liquid:hover {
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 0 20px 40px 0 rgba(0, 0, 0, 0.2),
+    0 0 20px var(--neon-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Update standard card to match theme if desired, or keep distinct */
+.card {
+  background: var(--glass-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+  border-top: 1px solid var(--glass-highlight);
+  border-left: 1px solid var(--glass-highlight);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Neon Text & Elements */
+.text-glow {
+  text-shadow: 0 0 10px var(--neon-primary);
+}
+
+.btn-liquid {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-highlight);
+  backdrop-filter: blur(4px);
+  color: var(--text-primary);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border-radius: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.btn-liquid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: 0.5s;
+}
+
+.btn-liquid:hover {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 20px var(--neon-primary);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.btn-liquid:hover::before {
+  left: 100%;
+}
+
+/* Scrollbar refinement */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+
+/* Background Breathe */
+@keyframes bg-breathe {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.03);
+  }
+
+  /* Subtle zoom */
+  100% {
+    transform: scale(1);
+  }
+}
+
+.bg-animate {
+  animation: bg-breathe 20s infinite ease-in-out;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+/* Liquid Background (Fuel & Control Theme) */
+.liquid-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  background-image: url('/speed-solutions-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.liquid-background::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.85);
+  /* Darker overlay for better contrast */
+  backdrop-filter: blur(4px);
 }

@@ -10,6 +10,7 @@ import { Test, Profile, Application, Status } from '@/types';
 import { formatDateTime } from '@/lib/utils';
 import { hasPermission } from '@/lib/permissions';
 import { exportTestsToExcel } from '@/lib/export';
+import LiquidLoader from '@/components/LiquidLoader';
 
 export default function TestsPage() {
     const [tests, setTests] = useState<Test[]>([]);
@@ -19,6 +20,7 @@ export default function TestsPage() {
     const router = useRouter();
 
     // Filtros
+    const [showFilters, setShowFilters] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [filterApp, setFilterApp] = useState('');
@@ -113,7 +115,7 @@ export default function TestsPage() {
             <main className="container" style={{ padding: '2rem 1.5rem' }}>
                 <div className="flex items-center justify-between" style={{ marginBottom: '2rem' }}>
                     <div>
-                        <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                        <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-formal)' }}>
                             Pruebas
                         </h1>
                         <p style={{ color: 'var(--text-secondary)' }}>
@@ -121,6 +123,13 @@ export default function TestsPage() {
                         </p>
                     </div>
                     <div className="flex gap-2">
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="btn btn-secondary"
+                            style={{ backgroundColor: showFilters ? 'var(--bg-tertiary)' : undefined }}
+                        >
+                            🔍 Filtros
+                        </button>
                         <button onClick={handleExport} className="btn btn-secondary">
                             📊 Exportar a Excel
                         </button>
@@ -133,68 +142,70 @@ export default function TestsPage() {
                 </div>
 
                 {/* Filtros */}
-                <div className="card" style={{ marginBottom: '1.5rem' }}>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="label">Buscar por título</label>
-                            <input
-                                type="text"
-                                className="input"
-                                placeholder="Escribe para buscar..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="label">Estado</label>
-                            <select
-                                className="input select"
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                            >
-                                <option value="">Todos los estados</option>
-                                {statuses.map((s) => (
-                                    <option key={s.id} value={s.id}>{s.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="label">Aplicación</label>
-                            <select
-                                className="input select"
-                                value={filterApp}
-                                onChange={(e) => setFilterApp(e.target.value)}
-                            >
-                                <option value="">Todas las aplicaciones</option>
-                                {applications.map((app) => (
-                                    <option key={app.id} value={app.id}>{app.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                    {(searchTerm || filterStatus || filterApp) && (
-                        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                                Mostrando {filteredTests.length} de {tests.length} pruebas
-                                {' • '}
-                                <button
-                                    onClick={() => {
-                                        setSearchTerm('');
-                                        setFilterStatus('');
-                                        setFilterApp('');
-                                    }}
-                                    style={{ color: 'var(--primary)', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+                {showFilters && (
+                    <div className="card" style={{ marginBottom: '1.5rem', boxShadow: 'var(--shadow-formal)' }}>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="label">Buscar por título</label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    placeholder="Escribe para buscar..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="label">Estado</label>
+                                <select
+                                    className="input select"
+                                    value={filterStatus}
+                                    onChange={(e) => setFilterStatus(e.target.value)}
                                 >
-                                    Limpiar filtros
-                                </button>
-                            </p>
+                                    <option value="">Todos los estados</option>
+                                    {statuses.map((s) => (
+                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="label">Aplicación</label>
+                                <select
+                                    className="input select"
+                                    value={filterApp}
+                                    onChange={(e) => setFilterApp(e.target.value)}
+                                >
+                                    <option value="">Todas las aplicaciones</option>
+                                    {applications.map((app) => (
+                                        <option key={app.id} value={app.id}>{app.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
-                    )}
-                </div>
+                        {(searchTerm || filterStatus || filterApp) && (
+                            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                    Mostrando {filteredTests.length} de {tests.length} pruebas
+                                    {' • '}
+                                    <button
+                                        onClick={() => {
+                                            setSearchTerm('');
+                                            setFilterStatus('');
+                                            setFilterApp('');
+                                        }}
+                                        style={{ color: 'var(--primary)', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+                                    >
+                                        Limpiar filtros
+                                    </button>
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '3rem' }}>
-                        <div className="loading" style={{ width: '48px', height: '48px', margin: '0 auto' }} />
+                        <LiquidLoader />
                     </div>
                 ) : filteredTests.length === 0 ? (
                     <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>

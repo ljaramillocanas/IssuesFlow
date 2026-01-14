@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
 import { Application } from '@/types';
+import LiquidLoader from '@/components/LiquidLoader';
 
 export default function AdminApplicationsPage() {
     const [applications, setApplications] = useState<Application[]>([]);
@@ -82,7 +83,7 @@ export default function AdminApplicationsPage() {
 
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '3rem' }}>
-                        <div className="loading" style={{ width: '48px', height: '48px', margin: '0 auto' }} />
+                        <LiquidLoader />
                     </div>
                 ) : (
                     <div className="grid grid-cols-3">

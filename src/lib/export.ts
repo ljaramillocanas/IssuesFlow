@@ -165,3 +165,85 @@ export function exportTestsWithProgress(
 
     XLSX.writeFile(wb, filename);
 }
+
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
+import { saveAs } from 'file-saver'; // We might need file-saver, but usually simple blob download works in browser.
+// If file-saver is not installed, we can use a helper. 
+// Let's assume we can use a simple buffer to blob download.
+// Wait, 'docx' Packer.toBlob is standard.
+
+export async function exportReportToWord(content: string, title: string = 'Informe') {
+    // Basic Markdown to Docx parser (Very simple version)
+    // We split by lines and try to identify headers or lists.
+
+    const lines = content.split('\n');
+    const children = lines.map(line => {
+        const trimmed = line.trim();
+
+        // Headers
+        if (trimmed.startsWith('# ')) {
+            return new Paragraph({
+                text: trimmed.replace('# ', ''),
+                heading: HeadingLevel.HEADING_1,
+                spacing: { before: 200, after: 100 }
+            });
+        }
+        if (trimmed.startsWith('## ')) {
+            return new Paragraph({
+                text: trimmed.replace('## ', ''),
+                heading: HeadingLevel.HEADING_2,
+                spacing: { before: 200, after: 100 }
+            });
+        }
+
+        // Lists
+        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            return new Paragraph({
+                children: [new TextRun({ text: trimmed.replace(/^[-*] /, ''), size: 24 })], // size in half-points (24 = 12pt)
+                bullet: { level: 0 }
+            });
+        }
+
+        // Bold checks (simplistic)
+        if (trimmed.includes('**')) {
+            // Split by **
+            const parts = trimmed.split('**');
+            const textRuns = parts.map((part, index) => {
+                return new TextRun({
+                    text: part,
+                    bold: index % 2 !== 0, // odd indices are between **
+                    size: 24
+                });
+            });
+            return new Paragraph({ children: textRuns });
+        }
+
+        // Default Paragraph
+        return new Paragraph({
+            children: [new TextRun({ text: line, size: 24 })],
+            spacing: { after: 100 }
+        });
+    });
+
+    const doc = new Document({
+        sections: [{
+            properties: {},
+            children: [
+                new Paragraph({
+                    text: title,
+                    heading: HeadingLevel.TITLE,
+                    spacing: { after: 300 }
+                }),
+                ...children
+            ],
+        }],
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.docx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}

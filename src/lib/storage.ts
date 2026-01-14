@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { showAlert } from './sweetalert';
 
 /**
  * Upload an image to Supabase Storage
@@ -43,7 +44,7 @@ export async function uploadImage(file: File, folder: string): Promise<string | 
         return publicUrl;
     } catch (error: any) {
         console.error('Error uploading image:', error);
-        alert(error.message);
+        showAlert('Error al subir archivo', error.message, 'error');
         return null;
     }
 }
@@ -72,7 +73,7 @@ export async function deleteImage(url: string): Promise<boolean> {
         return true;
     } catch (error: any) {
         console.error('Error deleting image:', error);
-        alert(error.message);
+        showAlert('Error al eliminar archivo', error.message, 'error');
         return false;
     }
 }

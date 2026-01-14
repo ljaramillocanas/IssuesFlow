@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { showAlert } from '@/lib/sweetalert';
+import LiquidLoader from '@/components/LiquidLoader';
 import Navbar from '@/components/Navbar';
 import CaseSelector from '@/components/CaseSelector';
 import ImageUpload from '@/components/ImageUpload';
@@ -82,7 +84,7 @@ export default function EditSolutionPage() {
             .single();
 
         if (error || !solutionData) {
-            alert('Solución no encontrada');
+            showAlert('Error', 'Solución no encontrada', 'error');
             router.push('/solutions');
             return;
         }
@@ -92,7 +94,7 @@ export default function EditSolutionPage() {
             hasPermission(profileData.role, 'canManageConfig');
 
         if (!canEdit) {
-            alert('No tienes permisos para editar esta solución');
+            showAlert('Error', 'No tienes permisos para editar esta solución', 'error');
             router.push(`/solutions/${params.id}`);
             return;
         }
@@ -198,10 +200,10 @@ export default function EditSolutionPage() {
                 if (attachError) throw attachError;
             }
 
-            alert('✅ Solución actualizada exitosamente');
+            showAlert('Éxito', '✅ Solución actualizada exitosamente', 'success');
             router.push(`/solutions/${params.id}`);
         } catch (error: any) {
-            alert('❌ Error al actualizar la solución: ' + error.message);
+            showAlert('Error', '❌ Error al actualizar la solución: ' + error.message, 'error');
         } finally {
             setSaving(false);
         }
@@ -232,7 +234,7 @@ export default function EditSolutionPage() {
             <>
                 <Navbar />
                 <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div className="loading" style={{ width: '48px', height: '48px' }} />
+                    <LiquidLoader />
                 </div>
             </>
         );

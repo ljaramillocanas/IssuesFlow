@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { showAlert } from '@/lib/sweetalert';
 import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
@@ -32,12 +34,12 @@ export default function LoginPage() {
                 if (error.message.includes('Invalid login credentials')) {
                     throw new Error('Usuario o contraseña incorrectos');
                 }
-                throw error;
+                showAlert('Error', error.message, 'error');
+            } else {
+                router.push('/');
             }
-
-            router.push('/');
         } catch (error: any) {
-            alert(error.message);
+            showAlert('Error', error.message, 'error');
         } finally {
             setLoading(false);
         }
@@ -49,12 +51,23 @@ export default function LoginPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundImage: 'url(/login_background.png)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
+            // Removed background properties from here
             padding: '1rem',
         }}>
+            {/* Animated Background Div */}
+            <div className="bg-animate" style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundImage: 'url(/login_background.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                zIndex: 0
+            }} />
+
             {/* Overlay darker to ensure readability */}
             <div style={{
                 position: 'absolute',
@@ -101,7 +114,7 @@ export default function LoginPage() {
                             fontWeight: 800,
                             color: '#1e3a8a', // Dark blue professional color
                             letterSpacing: '2px'
-                        }}>SPF</span>
+                        }}>SIF</span>
                     </div>
 
                     <h1 style={{
@@ -208,7 +221,7 @@ export default function LoginPage() {
                     >
                         {loading ? (
                             <>
-                                <span className="loading" style={{ marginRight: '8px' }} />
+                                <span className="loading-liquid" style={{ marginRight: '8px' }} />
                                 Accesando...
                             </>
                         ) : (

@@ -2,10 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { formatDate } from '@/lib/utils';
+import { showAlert } from '@/lib/sweetalert';
 import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
 import { Profile } from '@/types';
-import { hasPermission } from '@/lib/permissions';
+import { canAccessAdminPanel } from '@/lib/permissions';
+import LiquidLoader from '@/components/LiquidLoader';
 
 interface SystemSetting {
     key: string;
@@ -50,7 +53,7 @@ export default function SettingsPage() {
             setProfile(profileData);
 
             // Check if user has admin permissions
-            if (!hasPermission(profileData.role, 'canAccessAdminPanel')) {
+            if (!canAccessAdminPanel(profileData.role)) {
                 router.push('/');
                 return;
             }
@@ -99,23 +102,24 @@ export default function SettingsPage() {
 
         try {
             for (const update of updates) {
-                await supabase
+
+                const { error } = await supabase
                     .from('system_settings')
                     .update({
                         value: update.value,
                         updated_by: profile.id
                     })
                     .eq('key', update.key);
+                if (error) throw error;
             }
-
-            alert('✅ Configuración guardada exitosamente');
+            showAlert('Éxito', '✅ Configuración guardada exitosamente', 'success');
             await loadSettings();
         } catch (error) {
-            console.error('Error saving settings:', error);
-            alert('❌ Error al guardar la configuración');
+            console.error(error);
+            showAlert('Error', '❌ Error al guardar la configuración', 'error');
+        } finally {
+            setSaving(false);
         }
-
-        setSaving(false);
     };
 
     if (loading) {
@@ -123,7 +127,7 @@ export default function SettingsPage() {
             <>
                 <Navbar />
                 <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div className="loading" style={{ width: '48px', height: '48px' }} />
+                    <LiquidLoader />
                 </div>
             </>
         );

@@ -51,3 +51,8 @@ export function generateColorFromString(str: string): string {
     const color = Math.floor(Math.abs((Math.sin(hash) * 16777215) % 1) * 16777215);
     return '#' + color.toString(16).padStart(6, '0');
 }
+
+export function generateEmbedCode(url: string): string {
+    if (!url) return '';
+    return `<iframe src="${url}" width="100%" height="100%" style="border:0;" allowFullScreen></iframe>`;
+}

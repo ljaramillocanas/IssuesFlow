@@ -4,12 +4,15 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { showAlert } from '@/lib/sweetalert';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
 import { Case, Profile, Application, Status } from '@/types';
 import { formatDateTime } from '@/lib/utils';
 import { hasPermission } from '@/lib/permissions';
 import { exportCasesToExcel } from '@/lib/export';
+import ReportModal from '@/components/ReportModal';
+import LiquidLoader from '@/components/LiquidLoader';
 
 export default function CasesPage() {
     const [cases, setCases] = useState<Case[]>([]);
@@ -19,11 +22,17 @@ export default function CasesPage() {
     const router = useRouter();
 
     // Filtros
+    const [showFilters, setShowFilters] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [filterApp, setFilterApp] = useState('');
     const [applications, setApplications] = useState<Application[]>([]);
     const [statuses, setStatuses] = useState<Status[]>([]);
+
+    // AI Report State
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportContent, setReportContent] = useState('');
+    const [reportLoading, setReportLoading] = useState(false);
 
     useEffect(() => {
         checkAuthAndLoad();
@@ -111,8 +120,8 @@ export default function CasesPage() {
             // 1. Obtener IDs de los casos filtrados
             const caseIds = filteredCases.map(c => c.id);
 
-            if (caseIds.length === 0) {
-                alert('No hay casos para exportar');
+            if (filteredCases.length === 0) {
+                showAlert('Info', 'No hay casos para exportar', 'info');
                 if (exportBtn) {
                     exportBtn.innerText = '📊 Exportar a Excel';
                     (exportBtn as HTMLButtonElement).disabled = false;
@@ -177,13 +186,45 @@ export default function CasesPage() {
 
         } catch (err: any) {
             console.error('Error export:', err);
-            alert('Error al exportar: ' + err.message);
+            showAlert('Error', 'Error al exportar: ' + err.message, 'error');
         } finally {
             const exportBtn = document.getElementById('export-btn');
             if (exportBtn) {
                 exportBtn.innerText = '📊 Exportar a Excel';
                 (exportBtn as HTMLButtonElement).disabled = false;
             }
+        }
+    };
+
+    const handleGenerateAIReport = async (instruction?: string) => {
+        if (!instruction) {
+            setShowReportModal(true);
+        }
+
+        setReportLoading(true);
+        if (!instruction) setReportContent('');
+
+        try {
+            const response = await fetch('/api/ai/report/active', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    additionalInstructions: instruction
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || 'Error al generar el reporte');
+            }
+
+            const data = await response.json();
+            setReportContent(data.report);
+        } catch (error: any) {
+            console.error('Error generating report:', error);
+            setReportContent('Error al generar el reporte: ' + error.message);
+        } finally {
+            setReportLoading(false);
         }
     };
 
@@ -203,8 +244,26 @@ export default function CasesPage() {
                         </p>
                     </div>
                     <div className="flex gap-2">
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="btn btn-secondary"
+                            style={{ backgroundColor: showFilters ? 'var(--bg-tertiary)' : undefined }}
+                        >
+                            🔍 Filtros
+                        </button>
                         <button id="export-btn" onClick={handleExport} className="btn btn-secondary">
                             📊 Exportar a Excel
+                        </button>
+                        <button
+                            onClick={() => handleGenerateAIReport()}
+                            className="btn"
+                            style={{
+                                background: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)',
+                                color: 'white',
+                                border: 'none'
+                            }}
+                        >
+                            ✨ Informe IA
                         </button>
                         {canCreate && (
                             <Link href="/cases/new" className="btn btn-primary">
@@ -215,68 +274,70 @@ export default function CasesPage() {
                 </div>
 
                 {/* Filtros */}
-                <div className="card" style={{ marginBottom: '1.5rem' }}>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="label">Buscar por título</label>
-                            <input
-                                type="text"
-                                className="input"
-                                placeholder="Escribe para buscar..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="label">Estado</label>
-                            <select
-                                className="input select"
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                            >
-                                <option value="">Todos los estados</option>
-                                {statuses.map((s) => (
-                                    <option key={s.id} value={s.id}>{s.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="label">Aplicación</label>
-                            <select
-                                className="input select"
-                                value={filterApp}
-                                onChange={(e) => setFilterApp(e.target.value)}
-                            >
-                                <option value="">Todas las aplicaciones</option>
-                                {applications.map((app) => (
-                                    <option key={app.id} value={app.id}>{app.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                    {(searchTerm || filterStatus || filterApp) && (
-                        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                                Mostrando {filteredCases.length} de {cases.length} casos
-                                {' • '}
-                                <button
-                                    onClick={() => {
-                                        setSearchTerm('');
-                                        setFilterStatus('');
-                                        setFilterApp('');
-                                    }}
-                                    style={{ color: 'var(--primary)', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+                {showFilters && (
+                    <div className="card" style={{ marginBottom: '1.5rem' }}>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="label">Buscar por título</label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    placeholder="Escribe para buscar..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="label">Estado</label>
+                                <select
+                                    className="input select"
+                                    value={filterStatus}
+                                    onChange={(e) => setFilterStatus(e.target.value)}
                                 >
-                                    Limpiar filtros
-                                </button>
-                            </p>
+                                    <option value="">Todos los estados</option>
+                                    {statuses.map((s) => (
+                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="label">Aplicación</label>
+                                <select
+                                    className="input select"
+                                    value={filterApp}
+                                    onChange={(e) => setFilterApp(e.target.value)}
+                                >
+                                    <option value="">Todas las aplicaciones</option>
+                                    {applications.map((app) => (
+                                        <option key={app.id} value={app.id}>{app.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
-                    )}
-                </div>
+                        {(searchTerm || filterStatus || filterApp) && (
+                            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                    Mostrando {filteredCases.length} de {cases.length} casos
+                                    {' • '}
+                                    <button
+                                        onClick={() => {
+                                            setSearchTerm('');
+                                            setFilterStatus('');
+                                            setFilterApp('');
+                                        }}
+                                        style={{ color: 'var(--primary)', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+                                    >
+                                        Limpiar filtros
+                                    </button>
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '3rem' }}>
-                        <div className="loading" style={{ width: '48px', height: '48px', margin: '0 auto' }} />
+                        <LiquidLoader />
                     </div>
                 ) : filteredCases.length === 0 ? (
                     <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
@@ -335,6 +396,15 @@ export default function CasesPage() {
                     </div>
                 )}
             </main>
+
+            <ReportModal
+                isOpen={showReportModal}
+                onClose={() => setShowReportModal(false)}
+                content={reportContent}
+                loading={reportLoading}
+                title="Resumen Ejecutivo de Casos Activos"
+                onRegenerate={handleGenerateAIReport}
+            />
         </>
     );
 }

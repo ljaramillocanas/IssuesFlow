@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { showAlert, showConfirm } from '@/lib/sweetalert';
 import Navbar from '@/components/Navbar';
 import { Status } from '@/types';
+import LiquidLoader from '@/components/LiquidLoader';
 
 export default function AdminStatusesPage() {
     const [statuses, setStatuses] = useState<Status[]>([]);
@@ -33,20 +35,39 @@ export default function AdminStatusesPage() {
         setLoading(false);
     };
 
+    const resetForm = () => {
+        setEditingStatus(null);
+        setFormData({
+            name: '',
+            description: '',
+            color: '#3B82F6',
+            is_final: false,
+            display_order: 0,
+        });
+    };
+
     const handleSave = async () => {
-        if (editingStatus) {
-            await supabase
-                .from('statuses')
-                .update(formData)
-                .eq('id', editingStatus.id);
-        } else {
-            await supabase
-                .from('statuses')
-                .insert([formData]);
+        try {
+            if (editingStatus) {
+                const { error } = await supabase
+                    .from('statuses')
+                    .update(formData)
+                    .eq('id', editingStatus.id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('statuses')
+                    .insert([formData]);
+                if (error) throw error;
+            }
+            showAlert('Éxito', 'Estado guardado exitosamente', 'success');
+            setShowModal(false);
+            loadStatuses();
+            resetForm();
+        } catch (error: any) {
+            console.error('Error saving status:', error);
+            showAlert('Error', 'Error al guardar: ' + error.message, 'error');
         }
-        setShowModal(false);
-        loadStatuses();
-        resetForm();
     };
 
     const handleEdit = (status: Status) => {
@@ -62,24 +83,21 @@ export default function AdminStatusesPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm('¿Estás seguro de eliminar este estado?')) {
-            await supabase
-                .from('statuses')
-                .update({ deleted_at: new Date().toISOString() })
-                .eq('id', id);
+        const confirmed = await showConfirm('¿Estás seguro de eliminar este estado?');
+        if (!confirmed) return;
+
+        const { error } = await supabase
+            .from('statuses')
+            .update({ deleted_at: new Date().toISOString() })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error deleting status:', error);
+            showAlert('Error', 'Error al eliminar el estado: ' + error.message, 'error');
+        } else {
+            showAlert('Éxito', 'Estado eliminado exitosamente', 'success');
             loadStatuses();
         }
-    };
-
-    const resetForm = () => {
-        setEditingStatus(null);
-        setFormData({
-            name: '',
-            description: '',
-            color: '#3B82F6',
-            is_final: false,
-            display_order: 0,
-        });
     };
 
     return (
@@ -88,7 +106,7 @@ export default function AdminStatusesPage() {
             <main className="container" style={{ padding: '2rem 1.5rem' }}>
                 <div className="flex items-center justify-between" style={{ marginBottom: '2rem' }}>
                     <div>
-                        <h1 style={{ fontSize: '2rem', fontWeight: 700 }}>Gestión de Estados</h1>
+                        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-formal)' }}>Gestión de Estados</h1>
                         <p style={{ color: 'var(--text-secondary)' }}>
                             Configura los estados disponibles para casos y pruebas
                         </p>
@@ -103,7 +121,7 @@ export default function AdminStatusesPage() {
 
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '3rem' }}>
-                        <div className="loading" style={{ width: '48px', height: '48px', margin: '0 auto' }} />
+                        <LiquidLoader />
                     </div>
                 ) : (
                     <div className="table-container">

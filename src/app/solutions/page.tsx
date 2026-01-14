@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
+import LiquidLoader from '@/components/LiquidLoader';
 import { Solution, Application, CaseType, Status, Profile } from '@/types';
 import { formatDateTime } from '@/lib/utils';
 
@@ -16,6 +17,7 @@ export default function SolutionsPage() {
     const [loading, setLoading] = useState(true);
 
     // Filter states
+    const [showFilters, setShowFilters] = useState(false);
     const [applications, setApplications] = useState<Application[]>([]);
     const [caseTypes, setCaseTypes] = useState<CaseType[]>([]);
     const [statuses, setStatuses] = useState<Status[]>([]);
@@ -158,108 +160,119 @@ export default function SolutionsPage() {
                 <div style={{ marginBottom: '2rem' }}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-formal)' }}>
                                 Base de Conocimiento
                             </h1>
                             <p style={{ color: 'var(--text-secondary)' }}>
                                 Soluciones documentadas para casos resueltos
                             </p>
                         </div>
-                        <Link href="/solutions/new" className="btn btn-primary">
-                            + Nueva Solución
-                        </Link>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setShowFilters(!showFilters)}
+                                className="btn btn-secondary"
+                                style={{ backgroundColor: showFilters ? 'var(--bg-tertiary)' : undefined }}
+                            >
+                                🔍 Filtros
+                            </button>
+                            <Link href="/solutions/new" className="btn btn-primary">
+                                + Nueva Solución
+                            </Link>
+                        </div>
                     </div>
                 </div>
 
                 {/* Filters */}
-                <div className="card" style={{ marginBottom: '1.5rem' }}>
-                    <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem' }}>
-                        Filtros y Búsqueda
-                    </h2>
+                {showFilters && (
+                    <div className="card" style={{ marginBottom: '1.5rem', boxShadow: 'var(--shadow-formal)' }}>
+                        <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem' }}>
+                            Filtros y Búsqueda
+                        </h2>
 
-                    {/* Search bar */}
-                    <div className="form-group">
-                        <input
-                            type="text"
-                            className="input"
-                            placeholder="🔍 Buscar por título, descripción o nombre del caso..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="label">Aplicación</label>
-                            <select className="input" value={filterApp} onChange={(e) => setFilterApp(e.target.value)}>
-                                <option value="">Todas las aplicaciones</option>
-                                {applications.map(app => (
-                                    <option key={app.id} value={app.id}>{app.name}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="label">Tipo de Caso</label>
-                            <select className="input" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-                                <option value="">Todos los tipos</option>
-                                {caseTypes.map(type => (
-                                    <option key={type.id} value={type.id}>{type.name}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="label">Estado del Caso</label>
-                            <select className="input" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-                                <option value="">Todos los estados</option>
-                                {statuses.map(status => (
-                                    <option key={status.id} value={status.id}>{status.name}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="label">Fecha Desde</label>
+                        {/* Search bar */}
+                        <div className="form-group">
                             <input
-                                type="date"
+                                type="text"
                                 className="input"
-                                value={filterDateFrom}
-                                onChange={(e) => setFilterDateFrom(e.target.value)}
+                                placeholder="🔍 Buscar por título, descripción o nombre del caso..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
-                    </div>
 
-                    <div className="flex items-center gap-4" style={{ marginTop: '1rem' }}>
-                        <div className="form-group" style={{ marginBottom: 0, flex: 1 }}>
-                            <label className="label">Fecha Hasta</label>
-                            <input
-                                type="date"
-                                className="input"
-                                value={filterDateTo}
-                                onChange={(e) => setFilterDateTo(e.target.value)}
-                            />
-                        </div>
-                        <div style={{ paddingTop: '1.5rem' }}>
-                            <button onClick={clearFilters} className="btn btn-secondary">
-                                Limpiar Filtros
-                            </button>
-                        </div>
-                    </div>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="label">Aplicación</label>
+                                <select className="input" value={filterApp} onChange={(e) => setFilterApp(e.target.value)}>
+                                    <option value="">Todas las aplicaciones</option>
+                                    {applications.map(app => (
+                                        <option key={app.id} value={app.id}>{app.name}</option>
+                                    ))}
+                                </select>
+                            </div>
 
-                    {(filterApp || filterType || filterStatus || searchQuery || filterDateFrom || filterDateTo) && (
-                        <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
-                            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                                Mostrando {filteredSolutions.length} de {solutions.length} soluciones
-                            </p>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="label">Tipo de Caso</label>
+                                <select className="input" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+                                    <option value="">Todos los tipos</option>
+                                    {caseTypes.map(type => (
+                                        <option key={type.id} value={type.id}>{type.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="label">Estado del Caso</label>
+                                <select className="input" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                                    <option value="">Todos los estados</option>
+                                    {statuses.map(status => (
+                                        <option key={status.id} value={status.id}>{status.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="label">Fecha Desde</label>
+                                <input
+                                    type="date"
+                                    className="input"
+                                    value={filterDateFrom}
+                                    onChange={(e) => setFilterDateFrom(e.target.value)}
+                                />
+                            </div>
                         </div>
-                    )}
-                </div>
+
+                        <div className="flex items-center gap-4" style={{ marginTop: '1rem' }}>
+                            <div className="form-group" style={{ marginBottom: 0, flex: 1 }}>
+                                <label className="label">Fecha Hasta</label>
+                                <input
+                                    type="date"
+                                    className="input"
+                                    value={filterDateTo}
+                                    onChange={(e) => setFilterDateTo(e.target.value)}
+                                />
+                            </div>
+                            <div style={{ paddingTop: '1.5rem' }}>
+                                <button onClick={clearFilters} className="btn btn-secondary">
+                                    Limpiar Filtros
+                                </button>
+                            </div>
+                        </div>
+
+                        {(filterApp || filterType || filterStatus || searchQuery || filterDateFrom || filterDateTo) && (
+                            <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                    Mostrando {filteredSolutions.length} de {solutions.length} soluciones
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Solutions Table */}
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '3rem' }}>
-                        <div className="loading" style={{ width: '48px', height: '48px', margin: '0 auto' }} />
+                        <LiquidLoader />
                     </div>
                 ) : filteredSolutions.length === 0 ? (
                     <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
@@ -307,8 +320,8 @@ export default function SolutionsPage() {
                                                     padding: '0.25rem 0.5rem',
                                                     borderRadius: 'var(--radius-sm)',
                                                     fontSize: '0.75rem',
-                                                    backgroundColor: `${solution.case?.application?.color}15`,
-                                                    color: solution.case?.application?.color
+                                                    backgroundColor: `${solution.case?.application?.color || ''}15`,
+                                                    color: solution.case?.application?.color || undefined
                                                 }}>
                                                     {solution.case?.application?.name || '-'}
                                                 </span>
@@ -319,8 +332,8 @@ export default function SolutionsPage() {
                                                     padding: '0.25rem 0.625rem',
                                                     borderRadius: '9999px',
                                                     fontSize: '0.75rem',
-                                                    backgroundColor: `${solution.case?.status?.color}15`,
-                                                    color: solution.case?.status?.color
+                                                    backgroundColor: `${solution.case?.status?.color || ''}15`,
+                                                    color: solution.case?.status?.color || undefined
                                                 }}>
                                                     {solution.case?.status?.name || '-'}
                                                 </span>

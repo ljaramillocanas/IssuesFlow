@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { showAlert } from '@/lib/sweetalert';
 
 interface ImageUploadProps {
     onUploadComplete: (url: string) => void;
@@ -19,14 +20,14 @@ export default function ImageUpload({ onUploadComplete, folder, disabled, mode =
 
         // Validate file type
         if (!file.type.startsWith('image/')) {
-            alert('Por favor selecciona solo archivos de imagen');
+            showAlert('Error', 'Por favor selecciona solo archivos de imagen', 'warning');
             return;
         }
 
         // Validate file size (50MB max)
         const maxSize = 50 * 1024 * 1024;
         if (file.size > maxSize) {
-            alert('La imagen no debe superar 50MB');
+            showAlert('Error', 'La imagen no debe superar 50MB', 'warning');
             return;
         }
 
@@ -53,7 +54,8 @@ export default function ImageUpload({ onUploadComplete, folder, disabled, mode =
                 }
             }
         } catch (error: any) {
-            alert(`Error al subir imagen: ${error.message}`);
+            console.error('Error uploading image:', error);
+            showAlert('Error', `Error al subir imagen: ${error.message}`, 'error');
         } finally {
             setUploading(false);
         }

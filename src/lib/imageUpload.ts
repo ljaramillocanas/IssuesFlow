@@ -41,6 +41,8 @@ export async function uploadImageFromClipboard(blob: Blob, folder: string): Prom
     return uploadImageFile(file, folder);
 }
 
+import { showAlert } from './sweetalert';
+
 /**
  * Handle paste event for image upload
  * @param event - ClipboardEvent from paste
@@ -63,8 +65,8 @@ export async function handleImagePaste(
                     const url = await uploadImageFromClipboard(blob, folder);
                     onUpload(url);
                 } catch (error) {
-                    console.error('Error uploading pasted image:', error);
-                    alert('Error al subir la imagen pegada');
+                    console.error("Paste upload error", error);
+                    showAlert('Error', 'Error al subir la imagen pegada', 'error');
                 }
             }
         }
@@ -94,8 +96,8 @@ export async function handleImageDrop(
                 const url = await uploadImageFile(file, folder);
                 onUpload(url);
             } catch (error) {
-                console.error('Error uploading dropped image:', error);
-                alert('Error al subir la imagen arrastrada');
+                console.error("Drop upload error", error);
+                showAlert('Error', 'Error al subir la imagen arrastrada', 'error');
             }
         }
     }

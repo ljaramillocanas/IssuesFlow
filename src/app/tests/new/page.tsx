@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { showAlert } from '@/lib/sweetalert';
 import Navbar from '@/components/Navbar';
 import ImageUpload from '@/components/ImageUpload';
 import { Application, Category, TestType, Status, Profile, Case } from '@/types';
@@ -93,7 +94,8 @@ export default function NewTestPage() {
 
             router.push(`/tests/${data.id}`);
         } catch (error: any) {
-            alert('Error al crear la prueba: ' + error.message);
+            console.error('Error creating test:', error);
+            showAlert('Error', 'Error al crear la prueba: ' + error.message, 'error');
         } finally {
             setLoading(false);
         }
@@ -103,14 +105,14 @@ export default function NewTestPage() {
         <>
             <Navbar />
             <main className="container" style={{ padding: '2rem 1.5rem', maxWidth: '800px' }}>
-                <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-formal)' }}>
                     Nueva Prueba
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
                     Registra una nueva prueba en el sistema
                 </p>
 
-                <form onSubmit={handleSubmit} className="card">
+                <form onSubmit={handleSubmit} className="card" style={{ boxShadow: 'var(--shadow-formal)' }}>
                     <div className="form-group">
                         <label className="label" htmlFor="title">
                             Título *

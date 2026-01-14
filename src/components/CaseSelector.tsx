@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Case } from '@/types';
+import LiquidLoader from '@/components/LiquidLoader';
 
 interface CaseSelectorProps {
     value: string;
@@ -47,6 +48,7 @@ export default function CaseSelector({ value, onChange, onCaseSelect, disabled, 
             .limit(200);
 
         if (!error && data) {
+            // @ts-ignore - Supabase query with relations returns compatible structure
             setCases(data);
         }
         setLoading(false);
@@ -70,7 +72,7 @@ export default function CaseSelector({ value, onChange, onCaseSelect, disabled, 
         : cases;
 
     if (loading) {
-        return <div className="loading" style={{ width: '24px', height: '24px' }} />;
+        return <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}><LiquidLoader /></div>;
     }
 
     return (

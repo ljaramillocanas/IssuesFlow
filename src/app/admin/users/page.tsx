@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
 import { Profile } from '@/types';
 import { formatDateTime } from '@/lib/utils';
+import { showAlert, showConfirm } from '@/lib/sweetalert';
+import LiquidLoader from '@/components/LiquidLoader';
 
 export default function UsersPage() {
     const [users, setUsers] = useState<Profile[]>([]);
@@ -55,7 +57,10 @@ export default function UsersPage() {
             .select('*')
             .order('created_at', { ascending: false });
 
-        if (!error && data) {
+        if (error) {
+            console.error('Error fetching users:', error);
+            showAlert('Error', 'Error al cargar usuarios', 'error');
+        } else if (data) {
             setUsers(data);
         }
         setLoading(false);
@@ -97,14 +102,14 @@ export default function UsersPage() {
                 throw new Error(data.error || 'Error al crear usuario');
             }
 
-            alert('Usuario creado exitosamente');
+            showAlert('Éxito', 'Usuario creado exitosamente', 'success');
             setShowModal(false);
             setFormData({ username: '', password: '', full_name: '', role: 'Consulta' });
             loadUsers();
 
         } catch (error: any) {
             console.error('Error creating user:', error);
-            alert(`Error al crear usuario: ${error.message}`);
+            showAlert('Error', `Error al crear usuario: ${error.message}`, 'error');
         } finally {
             setCreating(false);
         }
@@ -130,7 +135,7 @@ export default function UsersPage() {
 
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '3rem' }}>
-                        <div className="loading" style={{ width: '48px', height: '48px', margin: '0 auto' }} />
+                        <LiquidLoader />
                     </div>
                 ) : (
                     <div className="table-container">

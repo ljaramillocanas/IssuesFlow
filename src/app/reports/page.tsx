@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
+import LiquidLoader from '@/components/LiquidLoader';
 import { Case, Test, Application, Status, Profile } from '@/types';
 import { exportCasesToExcel, exportTestsToExcel } from '@/lib/export';
 
@@ -96,7 +97,7 @@ export default function ReportsPage() {
         <>
             <Navbar />
             <main className="container" style={{ padding: '2rem 1.5rem' }}>
-                <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-formal)' }}>
                     Reportes y Exportación
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
@@ -104,7 +105,7 @@ export default function ReportsPage() {
                 </p>
 
                 {/* Filtros Globales */}
-                <div className="card" style={{ marginBottom: '2rem' }}>
+                <div className="card" style={{ marginBottom: '2rem', boxShadow: 'var(--shadow-formal)' }}>
                     <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>
                         Filtros de Exportación
                     </h2>
@@ -141,11 +142,11 @@ export default function ReportsPage() {
 
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '3rem' }}>
-                        <div className="loading" style={{ width: '48px', height: '48px', margin: '0 auto' }} />
+                        <LiquidLoader />
                     </div>
                 ) : (
                     <div className="grid grid-cols-2" style={{ marginBottom: '2rem' }}>
-                        <div className="card card-hover">
+                        <div className="card card-hover" style={{ boxShadow: 'var(--shadow-formal)' }}>
                             <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.5rem' }}>
                                 Exportar Casos
                             </h3>

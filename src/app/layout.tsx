@@ -3,8 +3,8 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "SpeedIssueFlow - Gestión de Casos y Pruebas",
-  description: "Sistema de gestión centralizada de casos y pruebas para SFL, SCA y PrintLink",
+  title: "SIF - SpeedIssuesFlow",
+  description: "Sistema de gestión centralizada de casos y pruebas",
 };
 
 export default function RootLayout({
@@ -15,7 +15,10 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body>
-        {children}
+        <div className="liquid-background" />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {children}
+        </div>
       </body>
     </html>
   );

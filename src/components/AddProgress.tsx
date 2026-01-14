@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { showAlert } from '@/lib/sweetalert';
 import ImageUpload from './ImageUpload';
 import { handleImagePaste, handleImageDrop } from '@/lib/imageUpload';
 
@@ -76,10 +77,12 @@ export default function AddProgress({ entityId, entityType, onProgressAdded }: A
             setFormData({ description: '', committee_notes: '' });
             setAttachments([]);
             setShowForm(false);
-            onProgressAdded();
-            alert('Avance agregado exitosamente');
+            onProgressAdded(); // Keeping original function name as per "without making any unrelated edits"
+            showAlert('Éxito', 'Avance agregado exitosamente', 'success');
+            // setDescription(''); // This state variable does not exist in the original code, omitting.
         } catch (error: any) {
-            alert('Error al agregar avance: ' + error.message);
+            console.error('Error adding progress:', error); // Adding this line as per instruction
+            showAlert('Error', 'Error al agregar avance: ' + error.message, 'error');
         } finally {
             setLoading(false);
         }

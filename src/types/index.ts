@@ -188,6 +188,7 @@ export interface Solution {
   case?: Case;
   creator?: Profile;
   attachments?: SolutionAttachment[];
+  resources?: SolutionResource[];
   tests?: Test[];
 }
 
@@ -200,6 +201,32 @@ export interface SolutionAttachment {
   uploaded_by: string | null;
   created_at: string;
   uploader?: Profile;
+}
+
+export type ResourceType = 'image' | 'video' | 'document' | 'link';
+
+export interface SolutionResource {
+  id: string;
+  solution_id: string | null; // Optional - resources can exist independently
+  title: string;
+  type: ResourceType;
+  url: string;
+  folder: string;
+  description: string | null;
+  file_size: number | null;
+  mime_type: string | null;
+  created_at: string;
+  created_by: string | null;
+  deleted_at: string | null;
+  // Sharing fields
+  share_token: string | null;
+  share_enabled: boolean;
+  share_permission: 'public' | 'authenticated' | null;
+  share_created_at: string | null;
+  share_expires_at: string | null;
+  // Populated relations
+  creator?: Profile;
+  solution?: Solution;
 }
 
 // Tipos para formularios

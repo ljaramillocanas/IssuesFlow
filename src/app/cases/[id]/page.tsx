@@ -9,13 +9,16 @@ import StatusBadge from '@/components/StatusBadge';
 import AddProgress from '@/components/AddProgress';
 import ImageGallery from '@/components/ImageGallery';
 import ImageUpload from '@/components/ImageUpload';
-import GalleryModal from '@/components/GalleryModal';
+import MediaViewer from '@/components/MediaViewer';
 import { exportCasesWithProgress } from '@/lib/export';
 import { Case, Application, Category, CaseType, Status, Profile, CaseProgress, Test, Solution } from '@/types';
 import { formatDateTime, formatRelativeTime } from '@/lib/utils';
 import { hasPermission } from '@/lib/permissions';
 import { deleteImage } from '@/lib/storage';
 import ChangeHistory from '@/components/ChangeHistory';
+import ReportModal from '@/components/ReportModal';
+import LiquidLoader from '@/components/LiquidLoader';
+import { showAlert, showConfirm } from '@/lib/sweetalert';
 
 export default function CaseDetailPage() {
     const params = useParams();
@@ -37,6 +40,11 @@ export default function CaseDetailPage() {
     const [caseTypes, setCaseTypes] = useState<CaseType[]>([]);
     const [statuses, setStatuses] = useState<Status[]>([]);
     const [users, setUsers] = useState<Profile[]>([]);
+
+    // AI Report State
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportContent, setReportContent] = useState('');
+    const [reportLoading, setReportLoading] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -161,37 +169,41 @@ export default function CaseDetailPage() {
 
             setEditing(false);
             await loadCase();
-            alert('Caso actualizado exitosamente');
+            showAlert('Éxito', 'Caso actualizado exitosamente', 'success');
         } catch (error: any) {
-            alert('Error al actualizar: ' + error.message);
+            showAlert('Error', 'Error al actualizar: ' + error.message, 'error');
         }
     };
 
     const handleFinalize = async () => {
-        if (!confirm('¿Estás seguro de finalizar este caso?')) return;
+        const confirmed = await showConfirm('¿Estás seguro de finalizar este caso?');
+        if (!confirmed) return;
 
         const finalStatus = statuses.find(s => s.is_final);
         if (!finalStatus) {
-            alert('No se encontró un estado final configurado.');
+            showAlert('Error', 'No se encontró un estado final configurado.', 'error');
             return;
         }
 
         setLoading(true);
-        const { error } = await supabase
-            .from('cases')
-            .update({
-                status_id: finalStatus.id,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', params.id);
+        try {
+            const { error } = await supabase
+                .from('cases')
+                .update({
+                    status_id: finalStatus.id,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', params.id);
 
-        if (error) {
-            alert('Error al finalizar el caso');
-        } else {
+            if (error) throw error;
+
             loadCase();
-            alert('Caso finalizado exitosamente');
+            showAlert('Éxito', 'Caso finalizado exitosamente', 'success');
+        } catch (error: any) {
+            showAlert('Error', 'Error al finalizar el caso: ' + error.message, 'error');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const handleExport = () => {
@@ -204,7 +216,8 @@ export default function CaseDetailPage() {
     };
 
     const handleDelete = async () => {
-        if (!confirm('¿Estás seguro de eliminar este caso?')) return;
+        const confirmed = await showConfirm('¿Estás seguro de eliminar este caso?');
+        if (!confirmed) return;
 
         try {
             const { error } = await supabase
@@ -214,9 +227,39 @@ export default function CaseDetailPage() {
 
             if (error) throw error;
 
+            showAlert('Éxito', 'Caso eliminado exitosamente', 'success');
             router.push('/cases');
         } catch (error: any) {
-            alert('Error al eliminar: ' + error.message);
+            showAlert('Error', 'Error al eliminar: ' + error.message, 'error');
+        }
+    };
+
+    const handleGenerateAIReport = async () => {
+        setShowReportModal(true);
+        setReportLoading(true);
+        setReportContent('');
+
+        try {
+            const response = await fetch('/api/ai/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    entityId: params.id,
+                    entityType: 'case'
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Error generating report');
+            }
+
+            const data = await response.json();
+            setReportContent(data.report);
+        } catch (error: any) {
+            setReportContent('Error al generar el informe: ' + error.message);
+        } finally {
+            setReportLoading(false);
         }
     };
 
@@ -229,7 +272,7 @@ export default function CaseDetailPage() {
             <>
                 <Navbar />
                 <div style={{ minHeight: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div className="loading" style={{ width: '48px', height: '48px' }} />
+                    <LiquidLoader />
                 </div>
             </>
         );
@@ -259,7 +302,7 @@ export default function CaseDetailPage() {
                 <div className="flex items-center justify-between" style={{ marginBottom: '2rem' }}>
                     <div>
                         <div className="flex items-center gap-4" style={{ marginBottom: '0.5rem' }}>
-                            <h1 style={{ fontSize: '2rem', fontWeight: 700, margin: 0 }}>
+                            <h1 style={{ fontSize: '2rem', fontWeight: 700, margin: 0, color: 'var(--text-formal)' }}>
                                 {caseData.title}
                             </h1>
                             {caseData.status && <StatusBadge status={caseData.status} />}
@@ -271,6 +314,17 @@ export default function CaseDetailPage() {
                     <div className="flex gap-2">
                         <button onClick={handleExport} className="btn btn-secondary">
                             📊 Exportar
+                        </button>
+                        <button
+                            onClick={handleGenerateAIReport}
+                            className="btn btn-primary"
+                            style={{
+                                background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                                border: 'none',
+                                color: 'white'
+                            }}
+                        >
+                            ✨ Informe IA
                         </button>
                         {canEdit && !isFinalStatus && (
                             <>
@@ -445,9 +499,15 @@ export default function CaseDetailPage() {
                             </div>
 
                             {showGallery && (
-                                <GalleryModal
-                                    attachments={attachments}
+                                <MediaViewer
+                                    isOpen={showGallery}
                                     onClose={() => setShowGallery(false)}
+                                    items={attachments.map(att => ({
+                                        id: att.id,
+                                        url: att.file_url,
+                                        type: att.file_type || 'image',
+                                        title: att.file_name
+                                    }))}
                                 />
                             )}
 
@@ -681,6 +741,14 @@ export default function CaseDetailPage() {
                     </div>
                 </div>
             </main>
+
+            <ReportModal
+                isOpen={showReportModal}
+                onClose={() => setShowReportModal(false)}
+                content={reportContent}
+                loading={reportLoading}
+                title={caseData.title}
+            />
         </>
     );
 }

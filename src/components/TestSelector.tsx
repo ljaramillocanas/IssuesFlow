@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import LiquidLoader from '@/components/LiquidLoader';
 import { Test } from '@/types';
 
 interface TestSelectorProps {
@@ -50,7 +51,7 @@ export default function TestSelector({ selectedIds, onChange, disabled }: TestSe
         test.case?.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    if (loading) return <div className="loading" style={{ width: '24px', height: '24px' }} />;
+    if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}><LiquidLoader /></div>;
 
     return (
         <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
